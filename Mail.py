@@ -9,7 +9,7 @@ __author__ = 'sunxvming'
 
 SMTP = "smtp.163.com"
 USER = "sunxvming@163.com"
-PASS = "yourpass"
+PASS = "ming1618v"
 
 
 def send_mail(to, subject, txt, attach_file_name = None):
@@ -46,4 +46,4 @@ def send_mail(to, subject, txt, attach_file_name = None):
     server.quit()
 
 if __name__ == '__main__':
-    send_mail(['466205048@qq.com'],'mailtest','hello,bbbbbbb','douban.csv')
+    send_mail(['466205048@qq.com'],'mailtest','hello,bbbbbbb')
