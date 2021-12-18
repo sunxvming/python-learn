@@ -1,6 +1,5 @@
 
 
-from typing_extensions import runtime
 
 
 MaxPoint = 100000;
@@ -37,6 +36,7 @@ def EdgeIndex(p1, p2):
     return p2 * MaxPoint + p1
 
 
+# 根据edgeindex生成Edge对象
 def markEdge(edgeindex):
     p1 = edgeindex / MaxPoint;
     p2 = edgeindex % MaxPoint;
@@ -151,8 +151,80 @@ class Polygon:
 
 
 
-def GenTxt():
+def GenTxt(vertices, indices):
+
+    # 找到所有没有被两个三角形给引用的边，用于找回环
+    for i in range(0, len(indices), 3):
+        p1 = indices[i];
+        p2 = indices[i+1];
+        p3 = indices[i+2];
+
+        edge1 = EdgeIndex(p1, p2);
+        edge2 = EdgeIndex(p2, p3);
+        edge3 = EdgeIndex(p3, p1);
+
+        edge2triangle = {};  # key是边的index，value是以该边为三角形的数量
+
+        if (edge1 in edge2triangle):
+            edge2triangle[edge1] = edge2triangle[edge1] + 1;
+        else:
+            edge2triangle[edge1] = 1;
+
+        if (edge2 in edge2triangle):
+            edge2triangle[edge2] = edge2triangle[edge2] + 1;
+        else:
+            edge2triangle[edge2] = 1;
+
+        if (edge3 in edge2triangle):
+            edge2triangle[edge3] = edge2triangle[edge3] + 1;
+        else:
+            edge2triangle[edge3] = 1;
+
+    # 点所在边集合
+    border = []  # 多边形边界，每个边界边只有一个三角形
+    point2edge = {}   # {point_index:[border中的边]} 点到边的映射,一个点可以映射到两个边
+    for item in edge2triangle:
+        if (edge2triangle[item] == 1):
+            i = len(border)
+            edge = markEdge(item)   # 通过边的索引获得边的对象,边的对象包含两个点
+            border.append(edge);
+            
+            p1 = edge.p1;
+            p2 = edge.p2;
+
+            if p1 not in point2edge:
+                point2edge[p1] = []
+            point2edge[p1].append(i)
+
+            if p2 not in point2edge:
+                point2edge[p2] = []
+            point2edge[p2].append(i)
+
+        elif edge2triangle[item] >= 3:
+            print("error: edge2triangle[item] != 1")
+
+
+    # 从任意边出发，找到回环，，回环有最外层的回环和内部包含的回环
+    visited = {}
+    for i in range(0, len(border)):
+        if(i not in visited):
+            edge = border[i]
+            p = edge.p2
+            b = True
+            polygon = []
+            pindexs = []
+            polygon.append(vertices[edge.p1])
+            polygon.append(vertices[edge.p2])
+            visited[i] = True
+
+            while True:
+                edge_list = point2edge[p]
+
+
+    # 判断单个连线是否在别的多边形内
+
     pass
+
 
 # ==========test=============
 '''
@@ -168,6 +240,21 @@ print(e1.other(2))
 
 '''
 
+
+vertices = [
+    [1,1],
+    [2,3],
+    [6,5],
+    [9,1],
+    [5,5],
+    [4,4]
+]
+indices = [
+1,2,6,
+2,3,4,
+4,5,6
+]
+GenTxt(vertices, indices)
 
 
 

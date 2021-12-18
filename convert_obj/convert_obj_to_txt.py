@@ -10,7 +10,6 @@ Notes:
 
 """
 
-from _typeshed import Self
 import fileinput
 import operator
 import random
@@ -92,6 +91,9 @@ def parse_obj(fname):
 
     faces = []
 
+
+    triangles = []
+
     materials = {}
     material = ""
     mcounter = 0
@@ -140,7 +142,9 @@ def parse_obj(fname):
                 uv_index = []
                 normal_index = []
 
-
+                triangles.append(chunks[1])
+                triangles.append(chunks[2])
+                triangles.append(chunks[3])
                 # Precompute vert / normal / uv lists
                 # for negative index lookup
                 vertlen = len(vertices) + 1
@@ -201,7 +205,7 @@ def parse_obj(fname):
             if chunks[0] == "s" and len(chunks) == 2:
                 smooth = chunks[1]
 
-    return faces, vertices, uvs, normals, materials, mtllib
+    return vertices, triangles, faces,  uvs, normals, materials, mtllib
 
 
 
@@ -214,12 +218,12 @@ def convert_txt(infile, outfile):
         print("Couldn't find [%s]" % infile)
         return
 
-    faces, vertices, uvs, normals, materials, mtllib = parse_obj(infile)
-    print(faces)
-    # print(vertices)
-    # print(uvs, normals, materials, mtllib)
+    vertices, triangles, _, _, _,_,_  = parse_obj(infile)
 
-    GenPolygon(vertices, faces)
+    # print(vertices)   # 存储着所有的点的坐标的list
+    print(triangles)  # 存储着所有的三角形的顶点索引的list
+
+    GenPolygon(vertices, triangles)
 
 # #############################################################################
 # Helpers
