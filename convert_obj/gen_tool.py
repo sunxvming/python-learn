@@ -1,7 +1,4 @@
 
-
-
-
 MaxPoint = 100000;
 
 class Point:
@@ -18,6 +15,7 @@ class Point:
 
 
 class Edge:
+    # p1, p2是点的索引
     def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
@@ -25,11 +23,11 @@ class Edge:
     def __str__(self) -> str:
         return "[{},{}]".format(self.p1, self.p2)
 
-
+    # 输入点的索引，返回另一个点的索引
     def other(self, p):
         return self.p1 if self.p2 == p else self.p2
     
-
+# 生成edge的索引
 def EdgeIndex(p1, p2):
     if p1 < p2:
         return p1 * MaxPoint + p2
@@ -47,8 +45,9 @@ def markEdge(edgeindex):
 
 class Polygon:
     
-    def __init__(self, Points):
+    def __init__(self, Points:list):
         self.Points = self.Merge( Points )
+
         p0 = Points[0];
         minx = p0.x;
         miny = p0.y;
@@ -71,15 +70,10 @@ class Polygon:
                 maxy = y
 
         # 左上角为坐标原点，向下向右坐标为坐标轴的正方向
-        self.lt.x = minx;  # left top
-        self.lt.y = miny;
-        self.rb.x = maxx;  # right bottom
-        self.rb.y = maxy;
-      
-        p = Points[maxxn];
-        pre = Points[ cnt if maxxn-1<0 else maxxn-1];
-        nxt = Points[ 0 if maxxn + 1 > cnt else maxxn + 1];
+        self.lt = Point(minx, maxy)   # left top
+        self.rb = Point(maxx, maxy)   # right bottom
 
+    
         # 判断点的集合是否是顺时针
         for i in range(cnt + 2):   # 最大到 cnt + 1
             if (i == cnt + 1):
@@ -93,7 +87,7 @@ class Polygon:
             nxt = Points[0 if n + 1 > cnt else n + 1];
             v1 = p.sub(pre);
             v2 = nxt.sub(p);
-            dxy =  v1.x* v2.y - v2.x * v1.y;
+            dxy =  v1.x* v2.y - v2.x * v1.y;  # 二维向量叉乘判断是否顺时针
             if (dxy != 0):
                 self.clock = dxy > 0;
                 break;
@@ -108,7 +102,7 @@ class Polygon:
 
 
     # 多边形是否包含另一个多边形p
-    def Contain(self, p):  # p:Polygon 
+    def Contain(self, p:'Polygon'): 
         plt = p.lt;
         prb = p.rb;
         if (self.lt.x > plt.x or self.lt.y > plt.y):
@@ -117,17 +111,17 @@ class Polygon:
             return False;
         return True;
 
-    # 自己被包含在其他多边形中
-    def Contained(self, polygons ): # polygons: list<Polygon>
+    # 返回包围自己的多边形
+    def Contained(self, polygons:list['Polygon'] ): 
         for i in range(len(polygons)):
-            polygon = polygons[i];
-            if (polygon != self and polygon.Contain(self)):
+            polygon = polygons[i]
+            if (polygon is not self and polygon.Contain(self)):
                 return polygon;
-      
+    
         return None
 
 
-    def Add(self, p):  #p:Polygon
+    def Add(self, p:'Polygon'): 
         self.polygons.Add(p);
 
 
@@ -150,10 +144,18 @@ class Polygon:
         return True;
 
 
+class NavPath:
+    def __init__(self):
+        self.polygons = []
 
-def GenTxt(vertices, indices):
+    def Add(self,p:Polygon):
+        self.polygons.append(p)        
 
-    # 找到所有没有被两个三角形给引用的边，用于找回环
+
+
+def GenPath(vertices, indices):
+
+    # 遍历所有三角的edge，找到所有没有被两个三角形给引用的边，用于找回环，分外回环和内回环
     for i in range(0, len(indices), 3):
         p1 = indices[i];
         p2 = indices[i+1];
@@ -163,67 +165,101 @@ def GenTxt(vertices, indices):
         edge2 = EdgeIndex(p2, p3);
         edge3 = EdgeIndex(p3, p1);
 
-        edge2triangle = {};  # key是边的index，value是以该边为三角形的数量
+        edge2triangle_num = {};  # key是边的index，value是以该边为三角形的数量
 
-        if (edge1 in edge2triangle):
-            edge2triangle[edge1] = edge2triangle[edge1] + 1;
+        if (edge1 in edge2triangle_num):
+            edge2triangle_num[edge1] = edge2triangle_num[edge1] + 1;
         else:
-            edge2triangle[edge1] = 1;
+            edge2triangle_num[edge1] = 1;
 
-        if (edge2 in edge2triangle):
-            edge2triangle[edge2] = edge2triangle[edge2] + 1;
+        if (edge2 in edge2triangle_num):
+            edge2triangle_num[edge2] = edge2triangle_num[edge2] + 1;
         else:
-            edge2triangle[edge2] = 1;
+            edge2triangle_num[edge2] = 1;
 
-        if (edge3 in edge2triangle):
-            edge2triangle[edge3] = edge2triangle[edge3] + 1;
+        if (edge3 in edge2triangle_num):
+            edge2triangle_num[edge3] = edge2triangle_num[edge3] + 1;
         else:
-            edge2triangle[edge3] = 1;
+            edge2triangle_num[edge3] = 1;
 
     # 点所在边集合
     border = []  # 多边形边界，每个边界边只有一个三角形
-    point2edge = {}   # {point_index:[border中的边]} 点到边的映射,一个点可以映射到两个边
-    for item in edge2triangle:
-        if (edge2triangle[item] == 1):
+    point2edges = {}   # {point_index:[border中边的index]} 点到边的映射,一个点可以映射到两个边
+    for edge in edge2triangle_num:
+        if (edge2triangle_num[edge] == 1):
             i = len(border)
-            edge = markEdge(item)   # 通过边的索引获得边的对象,边的对象包含两个点
+            edge = markEdge(edge)   # 通过边的索引获得边的对象,边的对象包含两个点
             border.append(edge);
             
             p1 = edge.p1;
             p2 = edge.p2;
 
-            if p1 not in point2edge:
-                point2edge[p1] = []
-            point2edge[p1].append(i)
+            if p1 not in point2edges:
+                point2edges[p1] = []
+            point2edges[p1].append(i)
 
-            if p2 not in point2edge:
-                point2edge[p2] = []
-            point2edge[p2].append(i)
+            if p2 not in point2edges:
+                point2edges[p2] = []
+            point2edges[p2].append(i)
 
-        elif edge2triangle[item] >= 3:
-            print("error: edge2triangle[item] != 1")
+        elif edge2triangle_num[edge] >= 3:
+            print("error: edge2triangle_num[edge] != 1")
 
 
-    # 从任意边出发，找到回环，，回环有最外层的回环和内部包含的回环
+    # 从任意边出发，找到回环，会有多个回环,有最外层的回环和内部包含的回环
+    polygons = []  # 多边形集合
     visited = {}
     for i in range(0, len(border)):
         if(i not in visited):
             edge = border[i]
             p = edge.p2
-            b = True
-            polygon = []
-            pindexs = []
+            polygon = []   # 一个回环，内含所有回环的点，而非点的索引
             polygon.append(vertices[edge.p1])
             polygon.append(vertices[edge.p2])
             visited[i] = True
 
             while True:
-                edge_list = point2edge[p]
+                edges = point2edges[p]
+                # 异常点判断
+                if len(edges) != 2:
+                    print("error: len(edges) != 2")
+                    break
+                e0 = edges[0]
+                e1 = edges[1]
+                
+                e = None
+                if e0 not in visited:
+                    e = border[e0]
+                    visited[e0] = True
+                elif e1 not in visited:
+                    e = border[e1]
+                    visited[e1] = True
+
+                # 转了一圈，回到起点
+                if e == None:
+                    break
+
+                nxtp = e.other(p)
+                polygon.append(vertices[nxtp])
+                p = nxtp
 
 
-    # 判断单个连线是否在别的多边形内
+            polygons.append(Polygon(polygon))
 
-    pass
+
+
+
+    # 用内回环和外回环构造最终的多边形
+    path = NavPath();
+    for i in range(len(polygons)):
+        polygon = polygons[i];
+        container = polygon.Contained(polygons)
+        if (container == None): # 外回环
+            path.Add(polygon)
+        else: # 内回环，添加到外回环中
+            container.Add(polygon)
+
+    return path
 
 
 # ==========test=============
@@ -254,7 +290,7 @@ indices = [
 2,3,4,
 4,5,6
 ]
-GenTxt(vertices, indices)
+GenPath(vertices, indices)
 
 
 
