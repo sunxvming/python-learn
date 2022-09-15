@@ -11,14 +11,7 @@ Notes:
 """
 
 import fileinput
-import operator
-import random
-import os.path
-import getopt
-import sys
-import struct
-import math
-import glob
+
 
 # #####################################################
 # Utils

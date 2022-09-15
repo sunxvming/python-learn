@@ -5,7 +5,7 @@ import os
 
 
 import parse_obj
-import gen_tool
+import navmesh
 
 # #############################################################################
 # Helpers
@@ -26,7 +26,7 @@ def convert_obj2txt(infile, outfile):
     # print(vertices)   # 存储着所有的点的坐标的list
     print(triangles)  # 存储着所有的三角形的顶点索引的list
 
-    gen_tool.GenPath(vertices, triangles)
+    navmesh.gen_map(vertices, triangles)
 
 
 
