@@ -23,12 +23,17 @@ def convert_obj2txt(infile, outfile):
 
     vertices, triangles, _, _, _,_,_  = parse_obj.parse_obj(infile)
 
-    # print(vertices)   # 存储着所有的点的坐标的list
-    print(triangles)  # 存储着所有的三角形的顶点索引的list
+    # print(type(vertices[0][0]))   # 存储着所有的点的坐标的list
+    # print(type(triangles[0]))  # 存储着所有的三角形的顶点索引的list
 
-    navmesh.gen_map(vertices, triangles)
+    # print((vertices))   
+    # print((triangles))  
 
+    mesh = navmesh.NavMash(vertices, triangles)
 
+    pols = mesh.find_loopback()
+    return pols
+    # print(pols)
 
 
 
@@ -57,9 +62,9 @@ if __name__ == "__main__":
 
         elif o in ("-o", "--output"):
             outfile = a
-    print("infile:" + infile)
-    print("outfile:" + outfile)
-    if infile == "" or outfile == "":
+    print("infile is:" + infile)
+    print("outfile is:" + outfile)
+    if infile == "":
         usage()
         sys.exit(2)
 

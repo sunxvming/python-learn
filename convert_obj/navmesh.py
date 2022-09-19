@@ -89,6 +89,7 @@ class Polygon:
         # 判断点的集合是否是顺时针
         for i in range(cnt + 2):   # 最大到 cnt + 1
             if (i == cnt + 1):
+                print("points:",self.points)
                 raise Exception("Clock Detect Fail")
 
             n = maxxn + i;
@@ -121,6 +122,9 @@ class Polygon:
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def get_coord_list(self):
+        return [[p.x, p.y] for p in self.points]
 
     # 把特别靠近的顶点合并
     def merge(self, points):
@@ -173,14 +177,26 @@ class Polygon:
 
 class NavMash:
     def __init__(self, vertices:list, indices:list):
+        if len(vertices) > MAX_POINT:
+            raise Exception("point count is too much")
+
         self.polygons = []
-        self.vertices = []
         self.indices = indices
-        
-        self.vertices.append(0)
+
+        #===处理顶点和边的索引
+        indices = [int(i) for i in indices]
+        vertices_tmp = [Point(0,0)] 
         for i in range(len(vertices)):
-            self.vertices.append(Point(vertices[i][0], vertices[i][1]))
-            
+            vertices_tmp.append(Point(vertices[i][0], vertices[i][2]))
+
+        self.vertices = []
+        for i in range(len(vertices_tmp)):
+            pt = vertices_tmp[i]
+
+
+        
+
+
 
     def __str__(self) -> str:
         str="""
@@ -221,7 +237,7 @@ class NavMash:
             else:
                 edge2triangle_num[edge3] = 1;
 
-        # print("edge2triangle_num":,edge2triangle_num)
+        # print("edge2triangle_num:",edge2triangle_num)
 
         # 点所在边集合
         border = []  # 多边形边界，每个边界边只有一个三角形
@@ -238,16 +254,29 @@ class NavMash:
                 if p1 not in point2edges:
                     point2edges[p1] = []
                 point2edges[p1].append(i)
+                if len(point2edges[p1]) > 2:
+                    pass
+                    # print("point2edges[p1] > 2, len is {}, p is {}, edge is {}".format(len(point2edges[p1]), p1, edge))
+                    # raise Exception("point2edges[p1] > 2")
 
                 if p2 not in point2edges:
                     point2edges[p2] = []
                 point2edges[p2].append(i)
+                if len(point2edges[p2]) > 2:
+                    # print("point2edges[p2] > 2, len is {}, p is {}, edge is {}".format(len(point2edges[p2]), p2, edge))
+
+                    # raise Exception("point2edges[p2] > 2")
+                    pass
+                if p1 == 39 or p2 == 39:
+                    print("point2edges[p] > 2, len is {}, p is {}, edge is {}".format(len(point2edges[39]), 39, edge))
+
+
 
             elif edge2triangle_num[edge] >= 3:
                 print("error: edge2triangle_num[edge] != 1")
 
-        print("border:", border)
-        print("point2edges:", point2edges)
+        # print("border:", border)
+        # print("point2edges:", point2edges)
 
         # 从任意边出发，找到回环，会有多个回环,有最外层的回环和内部包含的回环
         polygons = []  # 多边形集合
@@ -265,11 +294,14 @@ class NavMash:
                     edges = point2edges[p]
                     # 异常点判断
                     if len(edges) != 2:
-                        print("error: len(edges) != 2")
-                        break
+                        print("error: len(edges) is {}, p is {}, edges is {}".format(len(edges), p, edges))
+                        # break
                     e0 = edges[0]
                     e1 = edges[1]
                     
+                    if len(edges) > 2:
+                        e0 = edges[2]
+                        e1 = edges[3] 
                     e = None
                     if e0 not in visited:
                         e = border[e0]
@@ -285,8 +317,12 @@ class NavMash:
                     nxtp = e.other(p)
                     polygon.append(self.vertices[nxtp])
                     p = nxtp
-
-                polygons.append(Polygon(polygon))
+                if len(polygon) >= 3:  
+                    pol = Polygon(polygon)
+                    print("polygon============:", polygon)
+                
+                    polygons.append(pol)
+                    break
 
         return polygons
 
@@ -304,7 +340,7 @@ class NavMash:
                 self.add_polygon(polygon)
             else: # 内回环，添加到外回环中
                 container.add_sub_polygon(polygon)
-
+        return self.polygons
 
     def get_coordinate(self)->list[float]:
         self.gen_navmesh()

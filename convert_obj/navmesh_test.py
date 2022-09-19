@@ -132,14 +132,14 @@ class TestNavMesh(unittest.TestCase):
     def test_find_loopback(self):
         # 四边形套四边形的地图
         vertices = [
-            [0,0],
-            [3,0],
-            [3,3],
-            [0,3],
-            [1,1],
-            [2,1],
-            [2,2],
-            [1,2],
+            [0,0,0],
+            [3,0,0],
+            [3,0,3],
+            [0,0,3],
+            [1,0,1],
+            [2,0,1],
+            [2,0,2],
+            [1,0,2],
         ]
         indices = [
             1,5,6,
@@ -153,7 +153,10 @@ class TestNavMesh(unittest.TestCase):
         ]
 
         mesh = navmesh.NavMash(vertices, indices)
+
+        pols = mesh.find_loopback()
+        print(pols)
         navmap = mesh.get_coordinate()
-        print("navmap:", navmap)
+        # print("navmap:", navmap)
 if __name__ == '__main__':
     unittest.main()

@@ -302,7 +302,7 @@ public class CreatScenePath{
             var v = trans.TransformPoint(vertices[i]);
             var pt = new Point(v.x , v.z);
             int index = Points.FindIndex((Point p) => (
-            ((Math.Floor(pt.x * 10000) / 10000f) == (Math.Floor(p.x * 10000) / 10000f)) && ((Math.Floor(pt.y * 10000) / 10000f) == (Math.Floor(p.y * 10000) / 10000f))
+                ((Math.Floor(pt.x * 10000) / 10000f) == (Math.Floor(p.x * 10000) / 10000f)) && ((Math.Floor(pt.y * 10000) / 10000f) == (Math.Floor(p.y * 10000) / 10000f))
             ));
 
             if (index > -1)
